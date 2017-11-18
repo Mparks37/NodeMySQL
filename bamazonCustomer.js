@@ -1,138 +1,98 @@
 var mysql = require('mysql');
-var prompt = require('prompt')
+var inquirer = require('inquirer');
+var accounting = require('accounting');
+var chalk = require('chalk');
+var Bamazon = require('./bamazonTools');
 
-//  mysql connection
 var connection = mysql.createConnection({
   host: "localhost",
   port: 3306,
-
-  // Your username
-  user: "root",
-
-  // Your password
-  password: "root",
-  database: "bamazonDB"
+  user: "root", //Your username
+  password: "root", //Your password
+  database: "bamazon"
 });
 
-// Connecting to the Bamazon Database
 connection.connect(function(err) {
   if (err) throw err;
-
-  console.log('Database connected.');
-
+  start();
 });
 
-var schema = {
-  properties: {
-      ID: {
-      message: "Please enter the ID of the product you would like to buy.",
-      pattern: /^[0-9][0-9]$|^[0-9]$/,
-      required: true
-      },
-      howMany: {
-      message: "Please enter how many you would like to buy.",
-      pattern: /^[0-9][0-9]$|^[0-9][0-9][0-9]$/,
-      required: true
-      }
-  }
-};
+var max, col = ['Item ID', 'Product Name', 'Price'];
 
-var schema2 = {
-  properties: {
-      AnotherPurchase: {
-      message: "Would you like to buy another item?.",
-      pattern: /(no|n|yes|y)/,
-      required: true
-      },
-  }
-};
-
-// Function stop to the app
-var stopApp = function(){
-return next(err);
-}
-// Function to start the app
-var beginApp = function(){
-connection.query("SELECT * FROM Products", function(err, result) {
-  if (err) throw err;
-  return (getBamazonProducts(result));
-
-});
-}
-
-// Function to display all of the products available for sale in a table
-var getBamazonProducts = function (products){
-  console.log("Hello, Welcome to Bamazon! Here are all of the products, their costs, and current stock.");
-  for (var i = 0; i < products.length; i++) {
-      var productsResults = "\r\n"+
-      "ItemID: " + products[i].ItemID+"\r\n"+
-      "Product Description: " + products[i].ProductName+"\r\n"+
-      "Department: " + products[i].DepartmentName+"\r\n"+
-      "Price: $ "+ products[i].Price+"\r\n"+
-      "Current Stock: " + products[i].StockQuantity;
-      console.log(productsResults);
-  }
-  userSelectID();
-}
-
-// Function to get the user selection
-var userSelectID = function(){
-  prompt.start();
-  console.log("Please enter the ID of the product you would like to buy.");
-
-  prompt.get(schema, function (err, result) {
-      if (err){
-          console.log(err)
-      }
-      //console.log(result);
-      var userChoiceID = parseInt(result.ID);
-      var userChoiceHowMany = parseInt(result.howMany);
-      // console.log("id=" + userChoiceID + " how many=" + userChoiceHowMany);
-
-      // Function to check the inventory of an item
-      var checkInventory = function(){
-          connection.query('SELECT * FROM Products WHERE ItemID =' + userChoiceID, function(err, result) {
-              if (err) throw err;
-              //console.log(result);
-
-              var userWantsToBuy = userChoiceHowMany;
-              var productInventory = result[0].StockQuantity;
-              var productsPrice = result[0].Price;
-              var isInStock = productInventory - userWantsToBuy;
-              var totalCost= productsPrice * userWantsToBuy;
-
-              if (userWantsToBuy > productInventory || productInventory === 0){
-                  console.log("Apologies but there isn't enough in stock to complete your order. Please try again."+"\r\n"+"\r\n");
-                  userSelectID();
-              } else {
-                  console.log("There are "+result[0].StockQuantity+" of "+result[0].ProductName);
-                  console.log("You are purchasing "+ userWantsToBuy +" "+result[0].ProductName+"s at $"+ result[0].Price+" per item.");
-                  console.log("Your total is $"+totalCost);
-                  connection.query('UPDATE Products SET StockQuantity = '+isInStock+' WHERE ItemID ='+userChoiceID, function(err, result){
-                  if (err) throw err;
-                      connection.query('SELECT ItemID, ProductName, DepartmentName, Price, StockQuantity FROM products WHERE ItemID ='+userChoiceID, function(err, result){
-                          //console.log(result);
-                      }); 
-                  });
-                  prompt.get(schema2, function (err, result) {
-                      if (err){
-                          console.log(err)
-                      }
-                      console.log(result);
-                      var userAnswer = result.AnotherPurchase;
-                      if (userAnswer === "n" || userAnswer === "no"){
-                          stopApp();
-                      }else{
-                          beginApp();
-                      }   
-                  });
-              }
-            });
-      };
-      checkInventory();
+var start = function() {
+  // Select all rows of columns desired and print
+  var query = Bamazon.createQuery(col);
+  connection.query(query, function(err, res) {
+    handleQuery(res);
   });
-}
+};
 
-// start the app
-beginApp();
+var handleQuery = function(res) {
+  Bamazon.printData(res,col);
+  max = res[res.length - 1]['Item ID'];
+  chooseItem(max);
+};
 
+var chooseItem = function(max) {
+  inquirer.prompt([{
+    name: "id",
+    type: "input",
+    message: "What is the item ID of the product you would like to buy?",
+    validate: function(value) {
+      if (value>=0 && value<=max && value%1 === 0 && value.indexOf(' ')<0 && value.indexOf('.')<0) {
+        return true;
+      } else {
+        return 'Please type a whole number between 1 and ' + max + ' without a period or extra spaces';
+      }
+    }
+  } , {
+    name: "quantity",
+    type: "input",
+    message: "How many would you like to buy?",
+    validate: Bamazon.validateQuantity
+  }]).then(function(answer) {
+    checkQuantity(answer);
+  });
+};
+
+var checkQuantity = function(answer) {
+  var query = 'SELECT StockQuantity, Price, DepartmentName FROM Products WHERE ItemID = ?';
+  var params = answer.id;
+  connection.query(query, params, function(err, res) {
+    if (res[0].StockQuantity < answer.quantity) {
+      console.log(chalk.bold.red('Insufficient quantity.  Please select a quantity equal to or below ' + res[0].StockQuantity) + '.');
+      chooseItem(max);
+    } else {
+      var total = answer.quantity * res[0].Price;
+      var newQuantity = res[0].StockQuantity-answer.quantity;
+      updateQuantity(answer.id,total,newQuantity);
+      queryTotal(res[0].DepartmentName,total);
+    }
+  });
+};
+
+var updateQuantity = function(id,total,newQuantity) {
+  var query = 'UPDATE Products SET StockQuantity = ? WHERE ItemID = ?';
+  var params = [newQuantity,id];
+  connection.query(query, params, function(err, res) {
+    console.log(chalk.bold.blue('\nTotal cost: ') + chalk.bold.yellow(accounting.formatMoney(total)));
+    console.log(chalk.bold.blue('Thank you come again!'));
+  });
+};
+
+var queryTotal = function(deptName,total) {
+  var query = 'SELECT ProductSales FROM Departments WHERE DepartmentName = ?';
+  var params = deptName;
+  connection.query(query, params, function(err, res) {
+    updateTotal(res,deptName,total);
+  });
+};
+
+var updateTotal = function(res,deptName,total) {
+  var prodSales = res[0].ProductSales + total;
+  var query = 'UPDATE Departments SET ProductSales = ? WHERE DepartmentName = ?';
+  var params = [prodSales,deptName];
+  connection.query(query, params, function(err, res) {
+    connection.end();
+  });
+};

@@ -1,50 +1,43 @@
-DROP DATABASE IF EXISTS bamazonDB;
+CREATE DATABASE Bamazon;
+USE Bamazon;
 
-CREATE DATABASE bamazonDB;
- 
-USE bamazonDB;
-
-CREATE TABLE products (
-  item_id INT NOT NULL AUTO_INCREMENT,
-  product_name VARCHAR(45) NULL,
-  department_name VARCHAR(45) NULL,
-  price DECIMAL(5,2) NULL,
-  stock_quantity INT NULL,
-  PRIMARY KEY (item_id)
+CREATE TABLE Products (
+	ItemID INT(10) UNSIGNED AUTO_INCREMENT NOT NULL,
+    ProductName VARCHAR(255) NOT NULL,
+    DepartmentName VARCHAR(255) NOT NULL,
+    Price DECIMAL(10,2) NOT NULL,
+    StockQuantity SMALLINT UNSIGNED NOT NULL,
+    PRIMARY KEY(ItemID)
 );
-
-INSERT INTO products (product_name, department_name, price, stock_quantity)
-VALUES ("Colgate Toothpaste", "Health and Beauty", 5.50, 200);
-
-INSERT INTO products (product_name, department_name, price, stock_quantity)
-VALUES ("DVD Player", "Electronics", 55.00, 100);
-
-INSERT INTO products (product_name, department_name, price, stock_quantity)
-VALUES ("Wireless Mouse", "Office Supplies", 15.00, 50);
-
-INSERT INTO products (product_name, department_name, price, stock_quantity)
-VALUES ("Men's Sweater", "Men's Clothing", 25.00, 50);
-
-INSERT INTO products (product_name, department_name, price, stock_quantity)
-VALUES ("Axe Deoderant", "Health and Beauty", 3.00, 200);
-
-INSERT INTO products (product_name, department_name, price, stock_quantity)
-VALUES ("Desk Lamp", "Office Supplies", 10.00, 50);
-
-INSERT INTO products (product_name, department_name, price, stock_quantity)
-VALUES ("Gym Shorts", "Athletic Apperal", 20.00, 95);
-
-INSERT INTO products (product_name, department_name, price, stock_quantity)
-VALUES ("iPhone 8", "Electronics", 800.00, 150);
-
-INSERT INTO products (product_name, department_name, price, stock_quantity)
-VALUES ("Air Jordans", "Athletic Apperal", 125.00, 200);
-
-INSERT INTO products (product_name, department_name, price, stock_quantity)
-VALUES ("Multivitamins", "Health and Beauty", 15.00, 100);
-
-INSERT INTO products (product_name, department_name, price, stock_quantity)
-VALUES ("Laser Printer", "Office Supplies", 95.00, 150);
+INSERT INTO Products 
+	(ProductName,DepartmentName,Price,StockQuantity)
+VALUES
+	('iPhone 6S','Cell Phones',399.99,1000),
+    ('Galaxy S7','Cell Phones',499.99,5000),
+    ('Cargo Shorts','Clothing',29.99,200),
+    ('Bandana','Clothing',9.99,300),
+    ('Samsung Washing Machine','Appliances',699.99,50),
+    ('Wirlwind Dish Washer','Appliances',599.99,20),
+    ('Acoustic Guitar','Instruments',199.99,10),
+    ('Electric Violin','Instruments',199.99,12),
+    ('XBOX One','Electronics',399.99,10000),
+    ('Playstation 4','Electronics',399.99,20000);
+    
+CREATE TABLE Departments (
+	DepartmentID INT(10) UNSIGNED AUTO_INCREMENT NOT NULL,
+    DepartmentName VARCHAR(255) NOT NULL,
+    OverheadCosts DECIMAL(10,2) DEFAULT 0.00 NOT NULL,
+    ProductSales DECIMAL(10,2) DEFAULT 0.00,
+    PRIMARY KEY(DepartmentID)
+);
+INSERT INTO Departments 
+	(DepartmentName,OverHeadCosts)
+VALUES
+	('Cell Phones',1000),
+    ('Clothing',200),
+    ('Appliances',50),
+    ('Instruments',10),
+    ('Electronics',100);
 
 SELECT * FROM products;
 

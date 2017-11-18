@@ -1,16 +1,27 @@
 {
-  "name": "nodemysql",
+  "name": "bamazon-master",
   "version": "1.0.0",
-  "main": "index.js",
-  "scripts": {
-    "test": "echo \"Error: no test specified\" && exit 1"
-  },
-  "author": "Mike Parks",
-  "license": "ISC",
+  "description": "Bamazon Storefront",
+  "main": "bamazonCustomer.js",
   "dependencies": {
+    "accounting": "^0.4.1",
+    "cli-table": "^0.3.1",
+    "inquirer": "^4.0.0",
     "mysql": "^2.15.0",
     "prompt": "^1.0.0"
   },
   "devDependencies": {},
-  "description": ""
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/Mparks37/NodeMySQL.git"
+  },
+  "author": "Mike Parks",
+  "license": "ISC",
+  "bugs": {
+    "url": "https://github.com/Mparks37/NodeMySQL/issues"
+  },
+  "homepage": "https://github.com/Mparks37/NodeMySQL#readme"
 }
